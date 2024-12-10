@@ -1,10 +1,19 @@
 # Compiler and paths
 CXX = g++
+
+# SDL dependencies
 SDL_INCLUDE = "C:/Program Files/SDL/MinGW/sdl2_x86_64-w64-mingw32/include"
 SDL_LIB = "C:/Program Files/SDL/MinGW/sdl2_x86_64-w64-mingw32/lib"
 
+# SDL_mixer dependencies
+# SDL_MIXER_INCLUDE = "C:/Program Files/SDL/MinGW/sdl2_mixer_x86_64-w64-mingw32/include"
+# SDL_MIXER_LIB = "C:/Program Files/SDL/MinGW/sdl2_mixer_x86_64-w64-mingw32/include"
+
+# Compiler and linker flags
+# CXXFLAGS = -std=c++17 -I$(SDL_INCLUDE) -I$(SDL_MIXER_INCLUDE) -Wall
 CXXFLAGS = -std=c++17 -I$(SDL_INCLUDE) -Wall
-LDFLAGS = -L$(SDL_LIB) -lmingw32 -lSDL2main -lSDL2
+# LDFLAGS = -L$(SDL_LIB) -L$(SDL_MIXER_LIB) -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer
+LDFLAGS = -L$(SDL_LIB) -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer
 
 # Directories
 SRC_DIR = src
