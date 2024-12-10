@@ -1,0 +1,41 @@
+# Compiler and paths
+CXX = g++
+SDL_INCLUDE = "C:/Program Files/SDL/MinGW/sdl2_x86_64-w64-mingw32/include"
+SDL_LIB = "C:/Program Files/SDL/MinGW/sdl2_x86_64-w64-mingw32/lib"
+
+CXXFLAGS = -std=c++17 -I$(SDL_INCLUDE) -Wall
+LDFLAGS = -L$(SDL_LIB) -lmingw32 -lSDL2main -lSDL2
+
+# Directories
+SRC_DIR = src
+OBJ_DIR = obj
+TARGET = main
+
+# Files
+SRCS = $(wildcard $(SRC_DIR)/*.cpp)
+OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
+
+# Default target
+all: $(OBJ_DIR) $(TARGET)
+
+# Link the target executable
+$(TARGET): $(OBJS)
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
+# Compile source files to object files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -MMD -c $< -o $@
+
+# Include dependencies
+-include $(OBJS:.o=.d)
+
+# Create object directory if it doesn't exist
+$(OBJ_DIR):
+	if not exist $(OBJ_DIR) mkdir $(OBJ_DIR)
+
+# Clean up build files
+clean:
+	if exist $(TARGET).exe del /q $(TARGET)
+	if exist $(OBJ_DIR)\*.o del /q $(OBJ_DIR)\*.o
+	if exist $(OBJ_DIR)\*.d del /q $(OBJ_DIR)\*.d
+	if exist $(OBJ_DIR) rmdir /s /q $(OBJ_DIR)
