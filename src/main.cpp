@@ -2,7 +2,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
-
+#include <cmath>
 //option#1 (without main parameters) SDL redefines main to SDL_main
 // // #ifdef main
 // // #undef main
@@ -32,6 +32,10 @@ int ballSpeedY = 5;
 // Scores
 int leftScore = 0;
 int rightScore = 0;
+const int MAX_SCORE = 1;
+
+// is game over
+bool gameOver = false;
 
 void renderCenterText(SDL_Renderer* renderer, TTF_Font* font, const std::string& text, int width=SCREEN_WIDTH, int heigh=SCREEN_HEIGHT) {
     SDL_Color color = {255, 255, 255, 255}; // White color
@@ -85,6 +89,19 @@ void renderText(SDL_Renderer* renderer, TTF_Font* font, const std::string& text,
 //     TTF_CloseFont(font);
 //     return texture;
 // }
+
+void renderGradientCircle(SDL_Renderer* renderer, int centerX, int centerY, int radius) {
+    for (int y = -radius; y <= radius; y++) {
+        for (int x = -radius; x <= radius; x++) {
+            if (x * x + y * y <= radius * radius) {
+                int distance = std::sqrt(x * x + y * y);
+                int colorValue = 255 - (distance * 255 / radius);
+                SDL_SetRenderDrawColor(renderer, colorValue, colorValue, colorValue, 255);
+                SDL_RenderDrawPoint(renderer, centerX + x, centerY + y);
+            }
+        }
+    }
+}
 
 
 int main(int argc, char* argv[]) {
@@ -257,6 +274,11 @@ int main(int argc, char* argv[]) {
             Mix_PlayChannel(-1, scoreSound, 0);
         }
 
+        if (rightScore >= MAX_SCORE || leftScore >= MAX_SCORE) {
+            gameOver = true;
+            running = false;
+        }
+
         // if (ball.x <= 0 || ball.x + BALL_SIZE >= SCREEN_WIDTH) {
         //     ball.x = (SCREEN_WIDTH / 2) - (BALL_SIZE / 2);
         //     ball.y = (SCREEN_HEIGHT / 2) - (BALL_SIZE / 2);
@@ -271,6 +293,9 @@ int main(int argc, char* argv[]) {
 
         // Render border
         renderBorder(renderer,5);
+
+        //Render center circle
+        renderGradientCircle(renderer, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 100);
 
         // Draw paddles and ball
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
@@ -292,6 +317,45 @@ int main(int argc, char* argv[]) {
         // Delay to control frame rate
         SDL_Delay(16);
     }
+
+    //show game over screen
+    while (gameOver) {
+        SDL_Event e;
+        while (SDL_PollEvent(&e) != 0) {
+            if (e.type == SDL_QUIT) {
+                SDL_DestroyRenderer(renderer);
+                SDL_DestroyWindow(window);
+                Mix_FreeChunk(paddleSound);
+                Mix_FreeChunk(wallSound);
+                Mix_FreeChunk(scoreSound);
+                Mix_CloseAudio();
+                TTF_Quit();
+                SDL_Quit();
+                return 0;
+            }
+            if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_RETURN) {
+                gameOver = false;
+                leftScore = 0;
+                rightScore = 0;
+                ball.x = (SCREEN_WIDTH / 2) - (BALL_SIZE / 2);
+                ball.y = (SCREEN_HEIGHT / 2) - (BALL_SIZE / 2);
+                ballSpeedX = 5;
+                ballSpeedY = 5;
+            }
+        }
+
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black background
+        SDL_RenderClear(renderer);        
+        if (leftScore > rightScore) {            
+            renderCenterText(renderer, font, "Left Player Wins", SCREEN_WIDTH, SCREEN_HEIGHT);
+        } else {            
+            renderCenterText(renderer, font, "Right Player Wins", SCREEN_WIDTH, SCREEN_HEIGHT);
+        }   
+        renderCenterText(renderer, font, "Press Enter to Restart", SCREEN_WIDTH, SCREEN_HEIGHT + 50);
+        renderCenterText(renderer, font, "Press ESC to Quit", SCREEN_WIDTH, SCREEN_HEIGHT + 100);
+        SDL_RenderPresent(renderer);
+    }
+    
 
     // Clean up
     SDL_DestroyRenderer(renderer);
