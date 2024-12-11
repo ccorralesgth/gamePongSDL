@@ -1,6 +1,7 @@
 #include <iostream>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_ttf.h>
 
 //option#1 (without main parameters) SDL redefines main to SDL_main
 // // #ifdef main
@@ -28,27 +29,107 @@ const int BALL_SIZE = 20;
 int ballSpeedX = 5;
 int ballSpeedY = 5;
 
+// Scores
+int leftScore = 0;
+int rightScore = 0;
+
+void renderCenterText(SDL_Renderer* renderer, TTF_Font* font, const std::string& text, int width=SCREEN_WIDTH, int heigh=SCREEN_HEIGHT) {
+    SDL_Color color = {255, 255, 255, 255}; // White color
+    //SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), color);
+    SDL_Surface* surface = TTF_RenderText_Blended(font, text.c_str(), color);
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_Rect dstRect = {(width / 2 ) - surface->w / 2, (heigh / 2) - surface->h / 2, surface->w, surface->h};
+    SDL_RenderCopy(renderer, texture, NULL, &dstRect);
+    SDL_FreeSurface(surface);
+    SDL_DestroyTexture(texture);
+}
+
+void renderDashedLine(SDL_Renderer* renderer, int x, int y1, int y2, int dashLength, int gapLength) {
+    bool draw = true;
+    for (int y = y1; y < y2; y += dashLength + gapLength) {
+        if (draw) {
+            SDL_RenderDrawLine(renderer, x, y, x, y + dashLength);
+        }
+        draw = !draw;
+    }
+}
+
+void renderBorder(SDL_Renderer* renderer, int thickness) {
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White color
+    for (int i = 0; i < thickness; ++i) {
+        SDL_RenderDrawLine(renderer, i, i, SCREEN_WIDTH - i, i); // Top border
+        SDL_RenderDrawLine(renderer, i, i, i, SCREEN_HEIGHT - i); // Left border
+        SDL_RenderDrawLine(renderer, SCREEN_WIDTH - 1 - i, i, SCREEN_WIDTH - 1 - i, SCREEN_HEIGHT - i); // Right border
+        SDL_RenderDrawLine(renderer, i, SCREEN_HEIGHT - 1 - i, SCREEN_WIDTH - i, SCREEN_HEIGHT - 1 - i); // Bottom border
+    }
+}
+
+
+void renderText(SDL_Renderer* renderer, TTF_Font* font, const std::string& text, int x, int y) {
+    SDL_Color color = {255, 255, 255, 255}; // White color
+    //SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), color);
+    SDL_Surface* surface = TTF_RenderText_Blended(font, text.c_str(), color);
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_Rect dstRect = {x, y, surface->w, surface->h};
+    // SDL_Rect dstRect = {x - surface->w / 2, y - surface->h / 2, surface->w, surface->h};
+    SDL_RenderCopy(renderer, texture, NULL, &dstRect);
+    SDL_FreeSurface(surface);
+    SDL_DestroyTexture(texture);
+}
+
+// SDL_Texture* renderText(const std::string &message,const std::string &fontFile, SDL_Color color,int fontSize, SDL_Renderer* renderer) {
+//     TTF_Font* font = TTF_OpenFont(fontFile.c_str(), fontSize);
+//     SDL_Surface* surf = TTF_RenderText_Blended(font, message.c_str(), color);
+//     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surf);
+//     SDL_FreeSurface(surf);
+//     TTF_CloseFont(font);
+//     return texture;
+// }
+
+
 int main(int argc, char* argv[]) {
     // Initialize SDL
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
         return -1;
     }
 
-    // initialize SDL_mixer
+    // Initialize SDL_ttf
+    if (TTF_Init() == -1) {
+        std::cerr << "Failed to initialize SDL_ttf: " << TTF_GetError() << std::endl;
+        SDL_Quit();
+        return -1;
+    }
+
+     // Load Fonts        
+    SDL_Color font_color = {255, 255, 255, 255};
+    std::string font_name = "res/fonts/NES-Chimera/NES-Chimera.ttf";  
+    TTF_Font* font = TTF_OpenFont(font_name.c_str(), 25);  
+    // TTF_Font* font = TTF_OpenFont("res/fonts/NES-Chimera/NES-Chimera.ttf", 24);
+    if (!font) {
+        std::cerr << "Failed to load font: " << TTF_GetError() << std::endl;        
+        TTF_Quit();
+        SDL_Quit();
+        return -1;
+    }
+
+    // Initialize SDL_mixer
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
         std::cerr << "Failed to initialize SDL_mixer: " << Mix_GetError() << std::endl;
+        TTF_Quit();
+        SDL_Quit();
         return -1;
     }
 
     // load sound effects
     Mix_Chunk* paddleSound = Mix_LoadWAV("res/sounds/paddle_hit.wav");
     Mix_Chunk* wallSound = Mix_LoadWAV("res/sounds/wall_hit.wav");
-    Mix_Chunk* scoreSound = Mix_LoadWAV("res/sounds/score_update.wav");
+    Mix_Chunk* scoreSound = Mix_LoadWAV("res/sounds/score_update.wav");    
 
     if (!paddleSound || !wallSound || !scoreSound) {    
         std::cerr << "Failed to load sound effects: " << Mix_GetError() << std::endl;
         Mix_CloseAudio();
+        TTF_Quit();
         SDL_Quit();
         return -1;
     }
@@ -60,6 +141,8 @@ int main(int argc, char* argv[]) {
         Mix_FreeChunk(paddleSound);
         Mix_FreeChunk(wallSound);
         Mix_FreeChunk(scoreSound);
+        Mix_CloseAudio();
+        TTF_Quit();
         SDL_Quit();
         return -1;
     }
@@ -81,6 +164,44 @@ int main(int argc, char* argv[]) {
     SDL_Rect paddle1 = {50, (SCREEN_HEIGHT / 2) - (PADDLE_HEIGHT / 2), PADDLE_WIDTH, PADDLE_HEIGHT};
     SDL_Rect paddle2 = {SCREEN_WIDTH - 50 - PADDLE_WIDTH, (SCREEN_HEIGHT / 2) - (PADDLE_HEIGHT / 2), PADDLE_WIDTH, PADDLE_HEIGHT};
     SDL_Rect ball = {(SCREEN_WIDTH / 2) - (BALL_SIZE / 2), (SCREEN_HEIGHT / 2) - (BALL_SIZE / 2), BALL_SIZE, BALL_SIZE};
+   
+    // Show start screen
+    bool start = false;
+    while (!start) {
+        SDL_Event e;
+        while (SDL_PollEvent(&e) != 0) {
+            if (e.type == SDL_QUIT) {
+                SDL_DestroyRenderer(renderer);
+                SDL_DestroyWindow(window);
+                Mix_FreeChunk(paddleSound);
+                Mix_FreeChunk(wallSound);
+                Mix_FreeChunk(scoreSound);
+                Mix_CloseAudio();
+                TTF_Quit();
+                SDL_Quit();
+                return 0;
+            }
+            if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_RETURN) {
+                start = true;
+            }
+        }
+
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black background
+        SDL_RenderClear(renderer);
+        // create font image
+        //SDL_Texture* font_image_launch = renderText("Press SPACE to start",font_name, font_color, 16, renderer);
+        // renderText2(renderer, font, "Press Enter to Start", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 12);
+        renderCenterText(renderer, font, "Press Enter to Start", SCREEN_WIDTH, SCREEN_HEIGHT);
+        SDL_RenderPresent(renderer);
+    }
+
+    // // Scores.
+    // int left_score = 0;
+    // int right_score = 0;
+    // // Indicates when rendering new score is necessary.
+    // bool left_score_changed = false;
+    // // Indicates when rendering new score is necessary.
+    // bool  right_score_changed = false;
 
     bool running = true;
     SDL_Event event;
@@ -117,23 +238,53 @@ int main(int argc, char* argv[]) {
         }
 
         // Ball goes off screen (reset position)
-        if (ball.x <= 0 || ball.x + BALL_SIZE >= SCREEN_WIDTH) {
+        // Todo - update score, reset ball position, play audio and validate side of the screen where the ball went off, 
+        // validat if score on same side when off is lower than 0 then game over
+
+        if (ball.x <= 0) {
+            rightScore++;
+            // right_score_changed = true;
             ball.x = (SCREEN_WIDTH / 2) - (BALL_SIZE / 2);
             ball.y = (SCREEN_HEIGHT / 2) - (BALL_SIZE / 2);
             ballSpeedX = -ballSpeedX;
-            // ballSpeedX = -ballSpeedY;
-           Mix_PlayChannel(-1, wallSound, 0);
+            Mix_PlayChannel(-1, scoreSound, 0);
+        } else if (ball.x + BALL_SIZE >= SCREEN_WIDTH) {
+            leftScore++;
+            // left_score_changed = true;
+            ball.x = (SCREEN_WIDTH / 2) - (BALL_SIZE / 2);
+            ball.y = (SCREEN_HEIGHT / 2) - (BALL_SIZE / 2);
+            ballSpeedX = -ballSpeedX;
+            Mix_PlayChannel(-1, scoreSound, 0);
         }
+
+        // if (ball.x <= 0 || ball.x + BALL_SIZE >= SCREEN_WIDTH) {
+        //     ball.x = (SCREEN_WIDTH / 2) - (BALL_SIZE / 2);
+        //     ball.y = (SCREEN_HEIGHT / 2) - (BALL_SIZE / 2);
+        //     ballSpeedX = -ballSpeedX;
+        //     // ballSpeedX = -ballSpeedY;
+        //    Mix_PlayChannel(-1, wallSound, 0);
+        // }
 
         // Clear screen
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
+
+        // Render border
+        renderBorder(renderer,5);
 
         // Draw paddles and ball
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderFillRect(renderer, &paddle1);
         SDL_RenderFillRect(renderer, &paddle2);
         SDL_RenderFillRect(renderer, &ball);
+
+        // Render scores
+        renderText(renderer, font, std::to_string(leftScore), (SCREEN_WIDTH/2) - 50 , 50);
+        renderText(renderer, font, std::to_string(rightScore),(SCREEN_WIDTH/2) + 50 , 50);
+
+        // Render dashed center line
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White color        
+        renderDashedLine(renderer, SCREEN_WIDTH / 2, 0, SCREEN_HEIGHT, 10, 10);
 
         // Update screen
         SDL_RenderPresent(renderer);
@@ -148,8 +299,11 @@ int main(int argc, char* argv[]) {
     Mix_FreeChunk(paddleSound);
     Mix_FreeChunk(wallSound);
     Mix_FreeChunk(scoreSound);
-    Mix_CloseAudio();    
+    Mix_CloseAudio();
+    TTF_Quit();
     SDL_Quit();
 
     return 0;
 }
+
+

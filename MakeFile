@@ -13,7 +13,7 @@ SDL_LIB = "C:/Program Files/SDL/MinGW/sdl2_x86_64-w64-mingw32/lib"
 # CXXFLAGS = -std=c++17 -I$(SDL_INCLUDE) -I$(SDL_MIXER_INCLUDE) -Wall
 CXXFLAGS = -std=c++17 -I$(SDL_INCLUDE) -Wall
 # LDFLAGS = -L$(SDL_LIB) -L$(SDL_MIXER_LIB) -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer
-LDFLAGS = -L$(SDL_LIB) -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer
+LDFLAGS = -L$(SDL_LIB) -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lSDL2_ttf
 
 # Directories
 SRC_DIR = src
