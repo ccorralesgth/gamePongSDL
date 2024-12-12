@@ -208,10 +208,21 @@ int main(int argc, char *argv[])
                 TTF_Quit();
                 SDL_Quit();
                 return 0;
-            }
+            }            
             if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_RETURN)
             {
                 start = true;
+            }else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)
+            {
+                SDL_DestroyRenderer(renderer);
+                SDL_DestroyWindow(window);
+                Mix_FreeChunk(paddleSound);
+                Mix_FreeChunk(wallSound);
+                Mix_FreeChunk(scoreSound);
+                Mix_CloseAudio();
+                TTF_Quit();
+                SDL_Quit();
+                return 0;
             }
         }
 
@@ -222,7 +233,7 @@ int main(int argc, char *argv[])
     }
 
     // Game loop
-
+    
     bool running = true;
     bool gameOver = false;
     SDL_Event event;
