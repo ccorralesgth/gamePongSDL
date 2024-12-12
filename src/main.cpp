@@ -100,11 +100,6 @@ void renderGradientCircle(SDL_Renderer *renderer, int centerX, int centerY, int 
     }
 }
 
-// reset game state variables
-void resetGame()
-{
-}
-
 int main(int argc, char *argv[])
 {
     // Initialize SDL
@@ -208,11 +203,12 @@ int main(int argc, char *argv[])
                 TTF_Quit();
                 SDL_Quit();
                 return 0;
-            }            
+            }
             if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_RETURN)
             {
                 start = true;
-            }else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)
+            }
+            else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)
             {
                 SDL_DestroyRenderer(renderer);
                 SDL_DestroyWindow(window);
@@ -232,12 +228,11 @@ int main(int argc, char *argv[])
         SDL_RenderPresent(renderer);
     }
 
-    // Game loop
-    
     bool running = true;
     bool gameOver = false;
     SDL_Event event;
 
+    // Game loop
     while (running)
     {
         // Handle events
@@ -247,134 +242,86 @@ int main(int argc, char *argv[])
             {
                 running = false;
             }
+            if (gameOver && event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)
+            {
+                running = false;
+            }
+            else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RETURN)
+            {
+                gameOver = false;
+                leftScore = 0;
+                rightScore = 0;
+                ball.x = (SCREEN_WIDTH / 2) - (BALL_SIZE / 2);
+                ball.y = (SCREEN_HEIGHT / 2) - (BALL_SIZE / 2);
+                ballSpeedX = 5;
+                ballSpeedY = 5;
+
+                // Clear screen
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                SDL_RenderClear(renderer); // TODO: why do we need to render clear here?
+            }
         }
 
-        // Keyboard state
-        const Uint8 *keystate = SDL_GetKeyboardState(NULL);
-        if (keystate[SDL_SCANCODE_W] && paddle1.y > 0)
-            paddle1.y -= 5;
-        if (keystate[SDL_SCANCODE_S] && paddle1.y < SCREEN_HEIGHT - PADDLE_HEIGHT)
-            paddle1.y += 5;
-        if (keystate[SDL_SCANCODE_UP] && paddle2.y > 0)
-            paddle2.y -= 5;
-        if (keystate[SDL_SCANCODE_DOWN] && paddle2.y < SCREEN_HEIGHT - PADDLE_HEIGHT)
-            paddle2.y += 5;
-
-        // Move ball
-        ball.x += ballSpeedX;
-        ball.y += ballSpeedY;
-
-        // Ball collision with top and bottom
-        if (ball.y <= 0 || ball.y + BALL_SIZE >= SCREEN_HEIGHT)
+        if (!gameOver)
         {
-            ballSpeedY = -ballSpeedY;
-        }
+            // Keyboard state
+            const Uint8 *keystate = SDL_GetKeyboardState(NULL);
+            if (keystate[SDL_SCANCODE_W] && paddle1.y > 0)
+                paddle1.y -= 5;
+            if (keystate[SDL_SCANCODE_S] && paddle1.y < SCREEN_HEIGHT - PADDLE_HEIGHT)
+                paddle1.y += 5;
+            if (keystate[SDL_SCANCODE_UP] && paddle2.y > 0)
+                paddle2.y -= 5;
+            if (keystate[SDL_SCANCODE_DOWN] && paddle2.y < SCREEN_HEIGHT - PADDLE_HEIGHT)
+                paddle2.y += 5;
 
-        // Ball collision with paddles
-        if (SDL_HasIntersection(&ball, &paddle1) || SDL_HasIntersection(&ball, &paddle2))
-        {
-            ballSpeedX = -ballSpeedX;
-            Mix_PlayChannel(-1, paddleSound, 0);
-        }
+            // Move ball
+            ball.x += ballSpeedX;
+            ball.y += ballSpeedY;
 
-        if (ball.x <= 0)
-        {
-            rightScore++;
-            ball.x = (SCREEN_WIDTH / 2) - (BALL_SIZE / 2);
-            ball.y = (SCREEN_HEIGHT / 2) - (BALL_SIZE / 2);
-            ballSpeedX = -ballSpeedX;
-            Mix_PlayChannel(-1, scoreSound, 0);
-        }
-        else if (ball.x + BALL_SIZE >= SCREEN_WIDTH)
-        {
-            leftScore++;
-            ball.x = (SCREEN_WIDTH / 2) - (BALL_SIZE / 2);
-            ball.y = (SCREEN_HEIGHT / 2) - (BALL_SIZE / 2);
-            ballSpeedX = -ballSpeedX;
-            Mix_PlayChannel(-1, scoreSound, 0);
-        }
+            // Ball collision with top and bottom
+            if (ball.y <= 0 || ball.y + BALL_SIZE >= SCREEN_HEIGHT)
+            {
+                ballSpeedY = -ballSpeedY;
+            }
 
-        if (rightScore >= MAX_SCORE || leftScore >= MAX_SCORE)
-        {
-            running = false;
-            gameOver = true;
+            // Ball collision with paddles
+            if (SDL_HasIntersection(&ball, &paddle1) || SDL_HasIntersection(&ball, &paddle2))
+            {
+                ballSpeedX = -ballSpeedX;
+                Mix_PlayChannel(-1, paddleSound, 0);
+            }
+
+            if (ball.x <= 0)
+            {
+                rightScore++;
+                ball.x = (SCREEN_WIDTH / 2) - (BALL_SIZE / 2);
+                ball.y = (SCREEN_HEIGHT / 2) - (BALL_SIZE / 2);
+                ballSpeedX = -ballSpeedX;
+                Mix_PlayChannel(-1, scoreSound, 0);
+            }
+            else if (ball.x + BALL_SIZE >= SCREEN_WIDTH)
+            {
+                leftScore++;
+                ball.x = (SCREEN_WIDTH / 2) - (BALL_SIZE / 2);
+                ball.y = (SCREEN_HEIGHT / 2) - (BALL_SIZE / 2);
+                ballSpeedX = -ballSpeedX;
+                Mix_PlayChannel(-1, scoreSound, 0);
+            }
+
+            if (rightScore >= MAX_SCORE || leftScore >= MAX_SCORE)
+            {
+                // running = false;
+                gameOver = true;
+            }
         }
 
         // Clear screen
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer); // TODO: why do we need to render clear here?
 
-        // Render border
-        renderBorder(renderer, 5);
-
-        // Render center circle
-        renderGradientCircle(renderer, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 100);
-
-        // Draw paddles and ball
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        SDL_RenderFillRect(renderer, &paddle1);
-        SDL_RenderFillRect(renderer, &paddle2);
-        SDL_RenderFillRect(renderer, &ball);
-
-        // Render scores
-        renderText(renderer, font, std::to_string(leftScore), (SCREEN_WIDTH / 2) - 50, 50);
-        renderText(renderer, font, std::to_string(rightScore), (SCREEN_WIDTH / 2) + 50, 50);
-
-        // Render dashed center line
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White color
-        renderDashedLine(renderer, SCREEN_WIDTH / 2, 0, SCREEN_HEIGHT, 10, 10);
-
-        // Update screen
-        SDL_RenderPresent(renderer);
-
-        // Delay to control frame rate
-        SDL_Delay(16);
-
-        //****/
-        // show game over screen
-        while (gameOver)
+        if (gameOver)
         {
-            SDL_Event e;
-            while (SDL_PollEvent(&e) != 0)
-            {
-                if (e.type == SDL_QUIT)
-                {
-                    SDL_DestroyRenderer(renderer);
-                    SDL_DestroyWindow(window);
-                    Mix_FreeChunk(paddleSound);
-                    Mix_FreeChunk(wallSound);
-                    Mix_FreeChunk(scoreSound);
-                    Mix_CloseAudio();
-                    TTF_Quit();
-                    SDL_Quit();
-                    return 0;
-                }
-                if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_RETURN)
-                {
-                    gameOver = false;
-                    leftScore = 0;
-                    rightScore = 0;
-                    ball.x = (SCREEN_WIDTH / 2) - (BALL_SIZE / 2);
-                    ball.y = (SCREEN_HEIGHT / 2) - (BALL_SIZE / 2);
-                    ballSpeedX = 5;
-                    ballSpeedY = 5;
-                }
-                else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)
-                {
-                    SDL_DestroyRenderer(renderer);
-                    SDL_DestroyWindow(window);
-                    Mix_FreeChunk(paddleSound);
-                    Mix_FreeChunk(wallSound);
-                    Mix_FreeChunk(scoreSound);
-                    Mix_CloseAudio();
-                    TTF_Quit();
-                    SDL_Quit();
-                    return 0;
-                }
-            }
-
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black background
-            SDL_RenderClear(renderer);
             if (leftScore > rightScore)
             {
                 renderCenterText(renderer, font, "Left Player Wins", SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -385,10 +332,41 @@ int main(int argc, char *argv[])
             }
             renderCenterText(renderer, font, "Press Enter to Restart", SCREEN_WIDTH, SCREEN_HEIGHT + 50);
             renderCenterText(renderer, font, "Press ESC to Quit", SCREEN_WIDTH, SCREEN_HEIGHT + 100);
-            SDL_RenderPresent(renderer);
         }
-    }
+        else
+        {
+            // Clear screen
+            // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            // SDL_RenderClear(renderer); // TODO: why do we need to render clear here?
 
+            // Render border
+            renderBorder(renderer, 5);
+
+            // Render center circle
+            renderGradientCircle(renderer, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 100);
+
+            // Draw paddles and ball
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+            SDL_RenderFillRect(renderer, &paddle1);
+            SDL_RenderFillRect(renderer, &paddle2);
+            SDL_RenderFillRect(renderer, &ball);
+
+            // Render scores
+            renderText(renderer, font, std::to_string(leftScore), (SCREEN_WIDTH / 2) - 50, 50);
+            renderText(renderer, font, std::to_string(rightScore), (SCREEN_WIDTH / 2) + 50, 50);
+
+            // Render dashed center line
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White color
+            renderDashedLine(renderer, SCREEN_WIDTH / 2, 0, SCREEN_HEIGHT, 10, 10);
+        }
+
+        // Update screen
+        SDL_RenderPresent(renderer);
+
+        // Delay to control frame rate
+        SDL_Delay(16);
+    }
+    
     // Clean up
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

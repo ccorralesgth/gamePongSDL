@@ -14,7 +14,7 @@ C++ &amp; SDL replica of old Atari Ping Pong game
 - [x] Add border, center dashed line and center gradient circle
 
 # BACKLOG
-- [ ] Add Winner logic final screen 
+- [ ] Add Winner logic final screen with restart logic
 - [ ] loop to main game after restart game again
 - [ ] add configuration menu 
 - [ ] Change complexity level
