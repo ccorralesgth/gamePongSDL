@@ -12,14 +12,14 @@ C++ &amp; SDL replica of old Atari Ping Pong game
 - [x] Add Winner logic final screen
 - [x] Add score values, and logic for winner score.
 - [x] Add border, center dashed line and center gradient circle
+- [x] Add Winner logic final screen with restart logic
+- [x] loop to main game after restart game again
 
 # BACKLOG
-- [ ] Add Winner logic final screen with restart logic
-- [ ] loop to main game after restart game again
 - [ ] add configuration menu 
 - [ ] Change complexity level
-- [ ] change ball speed and direction when each set start
-- [ ] add machine vs player
-- [ ] add winner timer logic (max score & timer )
+- [ ] Change ball speed and direction when each set start
+- [ ] Add machine vs player
+- [ ] Add winner timer logic (max score & timer )
 - [ ] Add speed and paddle size change for complex gaming
 
