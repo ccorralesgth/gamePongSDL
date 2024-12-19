@@ -14,33 +14,62 @@ const int PADDLE_HEIGHT = 100;
 const int BALL_SIZE = 20;
 const int MAX_SCORE = 3;
 
-void renderFontText(SDL_Renderer *renderer, TTF_Font *font, const std::string &text, int width = SCREEN_WIDTH, int heigh = SCREEN_HEIGHT)
+void renderText(SDL_Renderer *renderer, TTF_Font *font, const std::string &text, int x = 0, int y = 0, bool centeredX = true, bool centeredY = true)
 {
 	SDL_Color color = {255, 255, 255, 255}; // white
-	// SDL_Surface *surface = TTF_RenderText_Solid(font, text.c_str(), color);
 	SDL_Surface *surface = TTF_RenderText_Blended(font, text.c_str(), color);
 	SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-	// SDL_Rect dstRect = {(width / 2) - surface->w / 2, (heigh / 2) - surface->h / 2, surface->w, surface->h};
-	SDL_Rect textRect = {SCREEN_WIDTH / 2 - surface->w / 2, SCREEN_HEIGHT / 2 - surface->h / 2, surface->w, surface->h};
+	SDL_Rect dstRect = {};
 
-	// SDL_Rect textRect = {x, y, surface->w, surface->h};
-	// SDL_RenderCopy(renderer, texture, NULL, &dstRect);
-	SDL_RenderCopy(renderer, texture, NULL, &textRect);
-	SDL_FreeSurface(surface);
-	SDL_DestroyTexture(texture);
-}
+	if (centeredX)
+	{
+		if (x == 0) // if center is true, x become an offset from the center x point
+			x = (SCREEN_WIDTH / 2 - surface->w / 2);
+		else
+			x = (SCREEN_WIDTH / 2 - surface->w / 2) + x;
+	}
+	if (centeredY)
+	{
+		if (y == 0) // if center is true, y become an offset from the center y point
+			y = (SCREEN_HEIGHT / 2 - surface->h / 2);
+		else
+			y = (SCREEN_HEIGHT / 2 - surface->h / 2) + y;
+	}
 
-void renderCenterText(SDL_Renderer *renderer, TTF_Font *font, const std::string &text, int width = SCREEN_WIDTH, int heigh = SCREEN_HEIGHT)
-{
-	SDL_Color color = {255, 255, 255, 255}; // White color
-	// SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), color);
-	SDL_Surface *surface = TTF_RenderText_Blended(font, text.c_str(), color);
-	SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-	SDL_Rect dstRect = {(width / 2) - surface->w / 2, (heigh / 2) - surface->h / 2, surface->w, surface->h};
+	dstRect = {x, y, surface->w, surface->h};
+
 	SDL_RenderCopy(renderer, texture, NULL, &dstRect);
 	SDL_FreeSurface(surface);
 	SDL_DestroyTexture(texture);
 }
+
+// void renderFontText(SDL_Renderer *renderer, TTF_Font *font, const std::string &text, int width = SCREEN_WIDTH, int heigh = SCREEN_HEIGHT)
+// {
+// 	SDL_Color color = {255, 255, 255, 255}; // white
+// 	// SDL_Surface *surface = TTF_RenderText_Solid(font, text.c_str(), color);
+// 	SDL_Surface *surface = TTF_RenderText_Blended(font, text.c_str(), color);
+// 	SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+// 	// SDL_Rect dstRect = {(width / 2) - surface->w / 2, (heigh / 2) - surface->h / 2, surface->w, surface->h};
+// 	SDL_Rect textRect = {SCREEN_WIDTH / 2 - surface->w / 2, SCREEN_HEIGHT / 2 - surface->h / 2, surface->w, surface->h};
+
+// 	// SDL_Rect textRect = {x, y, surface->w, surface->h};
+// 	// SDL_RenderCopy(renderer, texture, NULL, &dstRect);
+// 	SDL_RenderCopy(renderer, texture, NULL, &textRect);
+// 	SDL_FreeSurface(surface);
+// 	SDL_DestroyTexture(texture);
+// }
+
+// void renderCenterText(SDL_Renderer *renderer, TTF_Font *font, const std::string &text, int width = SCREEN_WIDTH, int heigh = SCREEN_HEIGHT)
+// {
+// 	SDL_Color color = {255, 255, 255, 255}; // White color
+// 	// SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), color);
+// 	SDL_Surface *surface = TTF_RenderText_Blended(font, text.c_str(), color);
+// 	SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+// 	SDL_Rect dstRect = {(width / 2) - surface->w / 2, (heigh / 2) - surface->h / 2, surface->w, surface->h};
+// 	SDL_RenderCopy(renderer, texture, NULL, &dstRect);
+// 	SDL_FreeSurface(surface);
+// 	SDL_DestroyTexture(texture);
+// }
 
 bool Initialize()
 {
@@ -148,8 +177,7 @@ int main(int argc, char *argv[])
 			// Clear screen
 			SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black background
 			SDL_RenderClear(renderer);
-
-			renderFontText(renderer, font, "Press Enter to Start", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 50);
+			renderText(renderer, font, "Press Enter to Start");
 			SDL_RenderPresent(renderer);
 		}
 		// Load sound effects
@@ -219,8 +247,7 @@ int main(int argc, char *argv[])
 			{
 				SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black background
 				SDL_RenderClear(renderer);
-
-				renderFontText(renderer, font, "Game Paused", SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT / 2 - 50);
+				renderText(renderer, font, "Game Paused");
 				SDL_RenderPresent(renderer);
 				continue;
 			}
@@ -229,10 +256,9 @@ int main(int argc, char *argv[])
 				SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black background
 				SDL_RenderClear(renderer);
 
-				// TODO: render winner, centralize text
-				renderFontText(renderer, font, "Game Over", SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT / 2 - 50);
-				renderFontText(renderer, font, "Press Enter to Restart", SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2);
-				renderFontText(renderer, font, "Press ESC to Quit", SCREEN_WIDTH / 2 - 250, SCREEN_HEIGHT / 2 + 50);
+				renderText(renderer, font, "Game Over", 0, (SCREEN_HEIGHT / 2) - 50, true, false);
+				renderText(renderer, font, "Press Enter to Restart");
+				renderText(renderer, font, "Press ESC to Quit", 0, (SCREEN_HEIGHT / 2) + 20, true, false);
 
 				SDL_RenderPresent(renderer);
 				continue;
