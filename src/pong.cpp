@@ -153,9 +153,21 @@ int main(int argc, char *argv[])
 			SDL_RenderPresent(renderer);
 		}
 		// Load sound effects
-		// Mix_Chunk *paddleSound = Mix_LoadWAV("res/sounds/paddle_hit.wav");
+		Mix_Chunk *paddleSound = Mix_LoadWAV("res/sounds/paddle_hit.wav");
 		Mix_Chunk *wallSound = Mix_LoadWAV("res/sounds/wall_hit.wav");
-		// Mix_Chunk *scoreSound = Mix_LoadWAV("res/sounds/score_update.wav");
+		Mix_Chunk *scoreSound = Mix_LoadWAV("res/sounds/score_update.wav");
+
+		if (!paddleSound || !wallSound || !scoreSound)
+		{
+			std::cerr << "Failed to load sound effects: " << Mix_GetError() << std::endl;
+			Mix_CloseAudio();
+			TTF_Quit();
+			SDL_Quit();
+			return -1;
+		}
+
+		SDL_Rect paddle1 = {50, (SCREEN_HEIGHT / 2) - (PADDLE_HEIGHT / 2), PADDLE_WIDTH, PADDLE_HEIGHT};
+		SDL_Rect paddle2 = {SCREEN_WIDTH - 50 - PADDLE_WIDTH, (SCREEN_HEIGHT / 2) - (PADDLE_HEIGHT / 2), PADDLE_WIDTH, PADDLE_HEIGHT};
 
 		SDL_Rect ball = {(SCREEN_WIDTH / 2) - (BALL_SIZE / 2), (SCREEN_HEIGHT / 2) - (BALL_SIZE / 2), BALL_SIZE, BALL_SIZE};
 		int ballSpeedX = 5;
@@ -183,7 +195,8 @@ int main(int argc, char *argv[])
 					{
 						pause = false;
 					}
-					if(gameOver){
+					if (gameOver)
+					{
 						leftScore = 0;
 						rightScore = 0;
 						ball.x = (SCREEN_WIDTH / 2) - (BALL_SIZE / 2);
@@ -216,39 +229,67 @@ int main(int argc, char *argv[])
 				SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black background
 				SDL_RenderClear(renderer);
 
+				// TODO: render winner, centralize text
 				renderFontText(renderer, font, "Game Over", SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT / 2 - 50);
-				renderFontText(renderer, font, "Press Enter to Restart", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2);
-				renderFontText(renderer, font, "Press ESC to Quit", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 + 50);
-				
+				renderFontText(renderer, font, "Press Enter to Restart", SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2);
+				renderFontText(renderer, font, "Press ESC to Quit", SCREEN_WIDTH / 2 - 250, SCREEN_HEIGHT / 2 + 50);
+
 				SDL_RenderPresent(renderer);
 				continue;
 			}
 			else
 			{
+				// check if winner
 				if (rightScore >= MAX_SCORE || leftScore >= MAX_SCORE)
 				{
 					gameOver = true;
+					continue;
 				}
 
-				
-				
+				// Keyboard state
+				const Uint8 *keystate = SDL_GetKeyboardState(NULL);
+				if (keystate[SDL_SCANCODE_W] && paddle1.y > 0)
+					paddle1.y -= 5;
+				if (keystate[SDL_SCANCODE_S] && paddle1.y < SCREEN_HEIGHT - PADDLE_HEIGHT)
+					paddle1.y += 5;
+				if (keystate[SDL_SCANCODE_UP] && paddle2.y > 0)
+					paddle2.y -= 5;
+				if (keystate[SDL_SCANCODE_DOWN] && paddle2.y < SCREEN_HEIGHT - PADDLE_HEIGHT)
+					paddle2.y += 5;
 
 				// move ball
 				ball.x += ballSpeedX;
 				ball.y += ballSpeedY;
 
-				// check ball collision
+				// Ball collision with top and bottom
 				if (ball.y <= 0 || ball.y + BALL_SIZE >= SCREEN_HEIGHT)
 				{
 					ballSpeedY = -ballSpeedY;
 					Mix_PlayChannel(-1, wallSound, 0);
-					rightScore++;
 				}
-				if (ball.x <= 0 || ball.x + BALL_SIZE >= SCREEN_WIDTH)
+
+				// Ball collision with paddles
+				if (SDL_HasIntersection(&ball, &paddle1) || SDL_HasIntersection(&ball, &paddle2))
 				{
 					ballSpeedX = -ballSpeedX;
-					Mix_PlayChannel(-1, wallSound, 0);
+					Mix_PlayChannel(-1, paddleSound, 0);
+				}
+
+				if (ball.x <= 0)
+				{
+					rightScore++;
+					ball.x = (SCREEN_WIDTH / 2) - (BALL_SIZE / 2);
+					ball.y = (SCREEN_HEIGHT / 2) - (BALL_SIZE / 2);
+					ballSpeedX = -ballSpeedX;
+					Mix_PlayChannel(-1, scoreSound, 0);
+				}
+				else if (ball.x + BALL_SIZE >= SCREEN_WIDTH)
+				{
 					leftScore++;
+					ball.x = (SCREEN_WIDTH / 2) - (BALL_SIZE / 2);
+					ball.y = (SCREEN_HEIGHT / 2) - (BALL_SIZE / 2);
+					ballSpeedX = -ballSpeedX;
+					Mix_PlayChannel(-1, scoreSound, 0);
 				}
 
 				// Clear screen
@@ -258,6 +299,8 @@ int main(int argc, char *argv[])
 				// Render ball
 				SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // white color
 				SDL_RenderFillRect(renderer, &ball);
+				SDL_RenderFillRect(renderer, &paddle1);
+				SDL_RenderFillRect(renderer, &paddle2);
 				SDL_RenderPresent(renderer);
 
 				// Delay to control frame rate
