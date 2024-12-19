@@ -1,7 +1,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
-
 #include <iostream>
 #include <cmath>
 
@@ -42,34 +41,6 @@ void renderText(SDL_Renderer *renderer, TTF_Font *font, const std::string &text,
 	SDL_FreeSurface(surface);
 	SDL_DestroyTexture(texture);
 }
-
-// void renderFontText(SDL_Renderer *renderer, TTF_Font *font, const std::string &text, int width = SCREEN_WIDTH, int heigh = SCREEN_HEIGHT)
-// {
-// 	SDL_Color color = {255, 255, 255, 255}; // white
-// 	// SDL_Surface *surface = TTF_RenderText_Solid(font, text.c_str(), color);
-// 	SDL_Surface *surface = TTF_RenderText_Blended(font, text.c_str(), color);
-// 	SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-// 	// SDL_Rect dstRect = {(width / 2) - surface->w / 2, (heigh / 2) - surface->h / 2, surface->w, surface->h};
-// 	SDL_Rect textRect = {SCREEN_WIDTH / 2 - surface->w / 2, SCREEN_HEIGHT / 2 - surface->h / 2, surface->w, surface->h};
-
-// 	// SDL_Rect textRect = {x, y, surface->w, surface->h};
-// 	// SDL_RenderCopy(renderer, texture, NULL, &dstRect);
-// 	SDL_RenderCopy(renderer, texture, NULL, &textRect);
-// 	SDL_FreeSurface(surface);
-// 	SDL_DestroyTexture(texture);
-// }
-
-// void renderCenterText(SDL_Renderer *renderer, TTF_Font *font, const std::string &text, int width = SCREEN_WIDTH, int heigh = SCREEN_HEIGHT)
-// {
-// 	SDL_Color color = {255, 255, 255, 255}; // White color
-// 	// SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), color);
-// 	SDL_Surface *surface = TTF_RenderText_Blended(font, text.c_str(), color);
-// 	SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-// 	SDL_Rect dstRect = {(width / 2) - surface->w / 2, (heigh / 2) - surface->h / 2, surface->w, surface->h};
-// 	SDL_RenderCopy(renderer, texture, NULL, &dstRect);
-// 	SDL_FreeSurface(surface);
-// 	SDL_DestroyTexture(texture);
-// }
 
 bool Initialize()
 {
