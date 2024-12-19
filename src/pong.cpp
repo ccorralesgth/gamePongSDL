@@ -41,6 +41,29 @@ void renderText(SDL_Renderer *renderer, TTF_Font *font, const std::string &text,
 	SDL_FreeSurface(surface);
 	SDL_DestroyTexture(texture);
 }
+void renderBorder(SDL_Renderer *renderer, int thickness)
+{
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White color
+    for (int i = 0; i < thickness; ++i)
+    {
+        SDL_RenderDrawLine(renderer, i, i, SCREEN_WIDTH - i, i);                                         // Top border
+        SDL_RenderDrawLine(renderer, i, i, i, SCREEN_HEIGHT - i);                                        // Left border
+        SDL_RenderDrawLine(renderer, SCREEN_WIDTH - 1 - i, i, SCREEN_WIDTH - 1 - i, SCREEN_HEIGHT - i);  // Right border
+        SDL_RenderDrawLine(renderer, i, SCREEN_HEIGHT - 1 - i, SCREEN_WIDTH - i, SCREEN_HEIGHT - 1 - i); // Bottom border
+    }
+}
+void renderDashedLine(SDL_Renderer *renderer, int x, int y1, int y2, int dashLength, int gapLength)
+{
+    bool draw = true;
+    for (int y = y1; y < y2; y += dashLength + gapLength)
+    {
+        if (draw)
+        {
+            SDL_RenderDrawLine(renderer, x, y, x, y + dashLength);
+        }
+        draw = !draw;
+    }
+}
 
 bool Initialize()
 {
@@ -90,7 +113,11 @@ int main(int argc, char *argv[])
 	else
 	{
 		// create window
-		window = SDL_CreateWindow("Pong", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+		window = SDL_CreateWindow("Pong", 
+		SDL_WINDOWPOS_CENTERED,
+		SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, 
+		// SDL_WINDOW_SHOWN | SDL_WINDOW_MAXIMIZED);
+		SDL_WINDOW_FULLSCREEN);
 		if (!window)
 		{
 			std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
@@ -226,8 +253,13 @@ int main(int argc, char *argv[])
 			{
 				SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black background
 				SDL_RenderClear(renderer);
-
-				renderText(renderer, font, "Game Over", 0, (SCREEN_HEIGHT / 2) - 50, true, false);
+				std::string winner = "";
+				if (leftScore > rightScore)				
+					winner = "Left Player Wins";				
+				else
+					winner = "Right Player Wins";
+				
+				renderText(renderer, font, winner, 0, (SCREEN_HEIGHT / 2) - 50, true, false);
 				renderText(renderer, font, "Press Enter to Restart");
 				renderText(renderer, font, "Press ESC to Quit", 0, (SCREEN_HEIGHT / 2) + 20, true, false);
 
@@ -293,14 +325,18 @@ int main(int argc, char *argv[])
 				SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // black color
 				SDL_RenderClear(renderer);
 
-				// Render ball
-				SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // white color
+				renderText(renderer, font, std::to_string(leftScore), 15, 15 ,false, false );
+				renderText(renderer, font, std::to_string(rightScore), SCREEN_WIDTH - 40, 15, false,false);
+
+				renderBorder(renderer, 5);            	
+				SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White color	
+				renderDashedLine(renderer, SCREEN_WIDTH / 2, 0, SCREEN_HEIGHT, 10, 10);			
+								
 				SDL_RenderFillRect(renderer, &ball);
 				SDL_RenderFillRect(renderer, &paddle1);
 				SDL_RenderFillRect(renderer, &paddle2);
 				SDL_RenderPresent(renderer);
 
-				// Delay to control frame rate
 				SDL_Delay(SCREEN_TICKS_PER_FRAME);
 			}
 		}
