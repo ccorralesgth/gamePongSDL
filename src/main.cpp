@@ -1,7 +1,7 @@
-#include <iostream>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
+#include <iostream>
 #include <cmath>
 
 // Screen dimensions
@@ -248,13 +248,20 @@ int main(int argc, char *argv[])
             }
             else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RETURN)
             {
-                gameOver = false;
-                leftScore = 0;
+                // gameOver = false;
+                if (gameOver){
+                    leftScore = 0;
                 rightScore = 0;
                 ball.x = (SCREEN_WIDTH / 2) - (BALL_SIZE / 2);
                 ball.y = (SCREEN_HEIGHT / 2) - (BALL_SIZE / 2);
                 ballSpeedX = 5;
                 ballSpeedY = 5;
+                }else{
+                    gameOver = false;
+                    leftScore = 0;
+                    rightScore = 0;
+                }
+                
 
                 // Clear screen
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -366,7 +373,7 @@ int main(int argc, char *argv[])
         // Delay to control frame rate
         SDL_Delay(16);
     }
-    
+
     // Clean up
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

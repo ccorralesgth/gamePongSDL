@@ -1,7 +1,7 @@
 # Description
 C++ &amp; SDL replica of old Atari Ping Pong game
 
-# DONE
+# DONE ()
 - [x] Setting up project structure
 - [x] Installed SDL2 library
 - [x] Installed SDL2_mixer
@@ -13,9 +13,9 @@ C++ &amp; SDL replica of old Atari Ping Pong game
 - [x] Add score values, and logic for winner score.
 - [x] Add border, center dashed line and center gradient circle
 - [x] Add Winner logic final screen with restart logic
-- [x] loop to main game after restart game again
+- [x] loop to main game after restart game again (12-12-24) 
 
-# BACKLOG
+# BACKLOG (12-09-24) to (12-12-24)
 - [ ] add configuration menu 
 - [ ] Change complexity level
 - [ ] Change ball speed and direction when each set start
